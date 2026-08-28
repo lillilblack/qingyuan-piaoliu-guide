@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>清远漂流攻略助手</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+<style>
+  :root{
+    --teal:#0e7c86; --teal-dark:#0a5a61; --teal-light:#e6f4f5;
+    --orange:#f59e0b; --orange-dark:#d97706;
+    --bg:#f4f8f9; --card:#ffffff; --line:#e3ecee;
+    --text:#1f2937; --muted:#6b7280; --muted2:#9ca3af;
+    --radius:16px; --shadow:0 4px 20px rgba(14,124,134,.08);
+    --shadow-lg:0 10px 40px rgba(14,124,134,.16);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.6; padding-bottom:80px;
+  }
+  a{color:var(--teal); text-decoration:none}
+  button{font-family:inherit; cursor:pointer}
+  /* ===== Header ===== */
+  header{
+    background:linear-gradient(135deg,#0b6b74,#0e7c86 55%,#12909b);
+    color:#fff; padding:22px 20px 18px;
+  }
+  header .wrap{max-width:960px; margin:0 auto}
+  header h1{margin:0; font-size:22px; display:flex; align-items:center; gap:10px}
+  header .sub{margin-top:6px; font-size:13px; opacity:.9}
+  .badge-date{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.18);
+    padding:4px 12px; border-radius:999px; font-size:12px; margin-top:10px}
+  /* weather banner */
+  .weather{margin:14px auto 0; max-width:960px; padding:0 20px}
+  .weather .box{background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:12px;
+    padding:10px 14px; font-size:13px; display:flex; gap:8px; align-items:flex-start}
+  /* ===== Tabs ===== */
+  nav.tabs{max-width:960px; margin:14px auto 0; padding:0 20px; display:flex; gap:8px; flex-wrap:wrap; position:sticky; top:0; z-index:40; background:var(--bg); padding-top:10px; padding-bottom:8px}
+  nav.tabs button{
+    border:1px solid var(--line); background:var(--card); color:var(--muted);
+    padding:9px 15px; border-radius:999px; font-size:14px; transition:.15s; white-space:nowrap;
+  }
+  nav.tabs button.active{background:var(--teal); color:#fff; border-color:var(--teal); box-shadow:var(--shadow)}
+  nav.tabs button:hover:not(.active){border-color:var(--teal); color:var(--teal)}
+  /* ===== Sections ===== */
+  main{max-width:960px; margin:0 auto; padding:0 20px}
+  section.tab{display:none}
+  section.tab.active{display:block; animation:fade .25s}
+  @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px; margin-top:14px}
+  .card h2{margin:0 0 4px; font-size:17px; display:flex; align-items:center; gap:8px}
+  .card .hint{color:var(--muted2); font-size:12px; margin:0 0 12px}
+  .card h3{font-size:15px; margin:18px 0 8px}
+  /* form */
+  .grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  label.f{display:flex; flex-direction:column; gap:5px; font-size:13px; color:var(--muted)}
+  select,input[type=date],input[type=number],input[type=text]{
+    padding:9px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px;
+    background:#fff; color:var(--text); font-family:inherit; width:100%
+  }
+  select:focus,input:focus{outline:2px solid var(--teal-light); border-color:var(--teal)}
+  .daytype{margin-top:12px; font-size:13px; padding:9px 12px; border-radius:10px; background:var(--teal-light); color:var(--teal-dark)}
+  .daytype b{color:var(--orange-dark)}
+  /* spot cards */
+  .spots{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .spot{border:2px solid var(--line); border-radius:14px; padding:14px; cursor:pointer; transition:.15s; position:relative}
+  .spot:hover{border-color:var(--teal)}
+  .spot.sel{border-color:var(--teal); background:var(--teal-light); box-shadow:var(--shadow)}
+  .spot .nm{font-weight:700; font-size:15px}
+  .spot .tag{display:inline-block; font-size:11px; background:#fff; border:1px solid var(--line);
+    color:var(--teal); padding:1px 8px; border-radius:999px; margin:6px 4px 0 0}
+  .spot .tag.hot{color:var(--orange-dark); border-color:#fed7aa}
+  .spot .price{margin-top:8px; color:var(--orange-dark); font-weight:700}
+  .spot .desc{font-size:12px; color:var(--muted); margin-top:6px}
+  .spot .check{position:absolute; top:10px; right:12px; color:var(--teal); font-size:18px; opacity:0}
+  .spot.sel .check{opacity:1}
+  /* table */
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:8px}
+  th,td{padding:9px 10px; text-align:left; border-bottom:1px solid var(--line)}
+  th{background:#f0f7f8; color:var(--teal-dark); font-weight:600; white-space:nowrap}
+  tr.hl td{background:var(--teal-light)}
+  td.hl{font-weight:700; color:var(--teal-dark)}
+  .price-num{color:var(--orange-dark); font-weight:700; white-space:nowrap}
+  .t-custom{width:120px; padding:6px 8px; font-size:13px; font-weight:600}
+  /* buttons */
+  .btn{display:inline-flex; align-items:center; gap:6px; border:none; border-radius:10px;
+    padding:9px 14px; font-size:13.5px; font-weight:600; transition:.15s}
+  .btn.primary{background:var(--teal); color:#fff}
+  .btn.primary:hover{background:var(--teal-dark)}
+  .btn.orange{background:var(--orange); color:#fff}
+  .btn.orange:hover{background:var(--orange-dark)}
+  .btn.ghost{background:#fff; color:var(--teal); border:1px solid var(--teal)}
+  .btn.ghost:hover{background:var(--teal-light)}
+  .btn.small{padding:6px 10px; font-size:12.5px}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+  .plat{display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--line);
+    padding:7px 12px; border-radius:10px; font-size:13px; color:var(--text); transition:.15s; font-weight:600}
+  .plat:hover{border-color:var(--teal); color:var(--teal)}
+  .plat .dot{width:8px; height:8px; border-radius:50%; background:var(--teal)}
+  /* steps */
+  .step{display:flex; gap:10px; margin:10px 0}
+  .step .n{flex:0 0 24px; height:24px; border-radius:50%; background:var(--teal); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; margin-top:2px}
+  .step .c{font-size:13.5px}
+  .step .c .addr{color:var(--muted); font-size:12.5px; margin-top:2px}
+  .step .c b{color:var(--teal-dark)}
+  /* transport tabs */
+  .tr-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px}
+  .tr-tabs button{border:1px solid var(--line); background:#fff; padding:8px 14px; border-radius:10px; font-size:13.5px; font-weight:600; color:var(--muted)}
+  .tr-tabs button.active{background:var(--teal); color:#fff; border-color:var(--teal)}
+  .tr-pane{display:none}
+  .tr-pane.active{display:block}
+  /* items */
+  .item{display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item .main{flex:1; min-width:0}
+  .item .nm{font-weight:600; font-size:14px}
+  .item .desc{font-size:12px; color:var(--muted); margin-top:2px}
+  .item .pr{font-size:12.5px; color:var(--orange-dark); font-weight:600; margin-top:4px}
+  .item .buy{display:flex; gap:6px; margin-top:6px; flex-wrap:wrap}
+  .item .buy a{font-size:12px; border:1px solid var(--line); padding:3px 9px; border-radius:8px; color:var(--muted); transition:.15s}
+  .item .buy a:hover{border-color:var(--orange); color:var(--orange-dark)}
+  .item .right{display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex:0 0 auto}
+  .qty{display:flex; align-items:center; gap:6px}
+  .qty button{width:26px; height:26px; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:15px; line-height:1}
+  .qty span{min-width:20px; text-align:center; font-weight:700}
+  .chk{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); cursor:pointer; user-select:none}
+  .chk input{width:16px; height:16px; accent-color:var(--teal)}
+  .cat-label{margin:16px 0 4px; font-size:13px; font-weight:700; color:var(--teal-dark)}
+  /* budget */
+  .total-box{background:linear-gradient(135deg,#0e7c86,#12909b); color:#fff; border-radius:14px;
+    padding:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px}
+  .total-box .num{font-size:32px; font-weight:800}
+  .total-box .lbl{font-size:13px; opacity:.9}
+  .b-line{display:flex; justify-content:space-between; padding:9px 2px; border-bottom:1px dashed var(--line); font-size:14px}
+  .b-line:last-child{border-bottom:none; font-weight:700; color:var(--teal-dark)}
+  .b-line .r{font-weight:600}
+  .member-grid{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin-top:4px}
+  .member-budget{background:#f7fafb; border:1px solid var(--line); border-radius:12px; padding:12px}
+  .mb-head{font-weight:700; margin-bottom:4px}
+  .mb-sub{font-size:11px; color:var(--muted); font-weight:400}
+  .mb-line{display:flex; justify-content:space-between; font-size:13px; padding:3px 0; color:var(--muted)}
+  .mb-line.total{border-top:1px dashed var(--line); margin-top:4px; padding-top:6px; color:var(--text); font-weight:700}
+  /* notes */
+  textarea.note{width:100%; min-height:260px; border:1px solid var(--line); border-radius:12px;
+    padding:12px; font-size:14px; line-height:1.7; font-family:inherit; resize:vertical; background:#fbfdfd}
+  textarea.note:focus{outline:2px solid var(--teal-light); border-color:var(--teal)}
+  .checklist{display:grid; gap:8px; grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .checklist .chk{background:#f7fafb; border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13px}
+  /* custom items */
+  .custom-add{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px}
+  .custom-add input[type=text]{flex:1 1 auto; min-width:150px; width:auto}
+  .custom-add input[type=number]{flex:0 0 108px; width:108px}
+  .custom-item{display:flex; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); flex-wrap:wrap}
+  .custom-item .nm{font-weight:600; flex:1 1 130px; min-width:130px}
+  .custom-item input[type=number]{flex:0 0 82px; width:82px; padding:6px 8px}
+  /* members */
+  .member-card{background:#fbfdfd; border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px}
+  .mc-top{display:flex; align-items:center; gap:8px; margin-bottom:8px}
+  .mc-badge{font-size:13px; font-weight:700; color:var(--teal-dark)}
+  .mc-top .m-name{flex:1; max-width:220px; padding:7px 10px; font-size:14px; font-weight:600}
+  .mc-top .m-del{margin-left:auto}
+  .mc-grid{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+  .mc-grid label.f{font-size:12px}
+  .mc-grid select,.mc-grid input{font-size:13px; padding:8px 9px}
+  .mc-toggle{width:100%; text-align:left; border:1px dashed var(--line); background:#f0f7f8; color:var(--teal-dark);
+    border-radius:8px; padding:7px 10px; font-size:12.5px; font-weight:600; margin-top:10px}
+  .mc-toggle:hover{border-color:var(--teal)}
+  .mc-items{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .mchip{display:inline-flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:999px;
+    padding:4px 10px; font-size:12px; cursor:pointer; user-select:none; background:#fff; transition:.12s}
+  .mchip.on{border-color:var(--teal); background:var(--teal-light)}
+  .mchip input{width:14px; height:14px; accent-color:var(--teal); margin:0}
+  .mchip i{font-style:normal; color:var(--orange-dark); font-size:11px}
+  .summary td.price-num{color:var(--orange-dark); font-weight:700}
+  .summary tr.grand td{background:#e6f4f5; font-weight:800; color:var(--teal-dark); border-top:2px solid var(--teal)}
+  /* ===== floating note ===== */
+  #noteTabBtn{position:fixed; right:0; top:45%; transform:translateY(-50%); z-index:90;
+    background:var(--orange); color:#fff; border:none; padding:16px 9px; border-radius:12px 0 0 12px;
+    writing-mode:vertical-rl; font-size:13px; font-weight:700; letter-spacing:2px; box-shadow:var(--shadow-lg)}
+  #noteTabBtn:hover{background:var(--orange-dark)}
+  #notePanel{position:fixed; right:0; top:0; height:100%; width:340px; max-width:92vw; z-index:100;
+    background:#fff; box-shadow:var(--shadow-lg); border-left:1px solid var(--line);
+    transform:translateX(105%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+    display:flex; flex-direction:column}
+  #notePanel.open{transform:translateX(0)}
+  #notePanel .head{background:linear-gradient(135deg,#0b6b74,#0e7c86); color:#fff; padding:12px 14px;
+    display:flex; align-items:center; justify-content:space-between; cursor:grab; flex:0 0 auto}
+  #notePanel .head:active{cursor:grabbing}
+  #notePanel .head .t{font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px}
+  #notePanel .head .x{background:rgba(255,255,255,.2); border:none; color:#fff; width:28px; height:28px;
+    border-radius:8px; font-size:16px; cursor:pointer}
+  #notePanel .body{flex:1; display:flex; flex-direction:column; padding:12px; gap:10px; min-height:0}
+  #notePanel textarea{flex:1; width:100%; border:1px solid var(--line); border-radius:12px; padding:12px;
+    font-size:14px; line-height:1.7; font-family:inherit; resize:none; background:#fbfdfd}
+  #notePanel textarea:focus{outline:2px solid var(--teal-light); border-color:var(--teal)}
+  #notePanel .tools{display:flex; gap:6px; flex-wrap:wrap}
+  #notePanel .tools button{flex:1; min-width:70px}
+  #notePanel .foot{font-size:12px; color:var(--muted2); text-align:center; padding:2px 0 4px}
+  /* mask */
+  #noteMask{position:fixed; inset:0; background:rgba(0,0,0,.25); z-index:95; opacity:0; pointer-events:none; transition:.25s}
+  #noteMask.show{opacity:1; pointer-events:auto}
+  /* footer */
+  footer{max-width:960px; margin:24px auto 0; padding:0 20px; color:var(--muted2); font-size:12px; text-align:center}
+  .toast{position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#111; color:#fff;
+    padding:10px 20px; border-radius:10px; font-size:13px; z-index:200; opacity:0; pointer-events:none; transition:.3s}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px)}
+  @media(max-width:600px){
+    header h1{font-size:19px}
+    .total-box .num{font-size:26px}
+    #notePanel{width:100vw}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>🌊 清远漂流攻略助手</h1>
+    <div class="sub">票价 · 交通 · 装备 · 预算 · 记攻略，一站搞定（数据本地自动保存）</div>
+    <span class="badge-date">📅 今日：2026年8月28日 · 星期五 · 暑期旺季</span>
+  </div>
+</header>
+
+<div class="weather">
+  <div class="box">☔ <span><b>天气提醒：</b>8月底清远气温约 22~32℃，午后多雷阵雨；暴雨/雷电时漂流会临时关停，<b>出发当天请先查景区开放状态</b>（可点下方"查天气"）。</span></div>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="plan" class="active">🎫 出行规划</button>
+  <button data-tab="shop">🛒 装备清单</button>
+  <button data-tab="budget">🧮 预算总览</button>
+  <button data-tab="notes">📝 我的攻略</button>
+</nav>
+
+<main>
+  <!-- ============ TAB 1 出行规划 ============ -->
+  <section class="tab active" id="tab-plan">
+
+    <div class="card">
+      <h2>🗓️ 出行设置</h2>
+      <p class="hint">选好日期会自动识别工作日/周末并高亮票价档；下方按「成员」分别设置出发地、交通、票种和携带装备，预算按人单独计算、最后自动汇总成总预算表。</p>
+      <div class="grid" style="grid-template-columns:minmax(180px,260px)">
+        <label class="f">出发日期
+          <input type="date" id="date">
+        </label>
+      </div>
+      <div class="daytype" id="dayType"></div>
+      <h3 style="margin-top:16px">👥 出行成员</h3>
+      <p class="hint" style="margin:0 0 8px">每个成员可独立选择：出发地 / 交通方式（交通费留空按估算，可手动改）/ 票种 / 携带装备。点成员卡片里的「🛒 装备」展开勾选该成员要带的物品。</p>
+      <div id="memberList"></div>
+      <div class="btn-row">
+        <button class="btn primary small" id="btnAddMember">＋ 添加成员</button>
+        <button class="btn ghost small" id="btnAllMust">☑️ 全员勾选「必带」</button>
+        <button class="btn ghost small" id="btnClearAllGear">清空全员装备</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📍 选择漂流景区</h2>
+      <p class="hint">点卡片选中，下方票价、交通会自动联动。</p>
+      <div class="spots" id="spotCards"></div>
+    </div>
+
+    <div class="card">
+      <h2>🎟️ 票价与购票渠道</h2>
+      <p class="hint" id="ticketHint"></p>
+      <table id="ticketTable"></table>
+      <div class="btn-row" id="buyBtns"></div>
+      <div class="hint" style="margin-top:10px">💡 查到当天实际价？在上方表格<b>「自定义价」列</b>按票种逐个填（¥/人），选了该票种的成员预算自动按它算；留空则用参考价。</div>
+      <h3>💡 购票建议</h3>
+      <div style="font-size:13px;color:var(--muted)">
+        ① 首选 <b>美团 / 携程 / 去哪儿 App</b> 提前一天下单（常有暑期券，比现场便宜 20~40 元）；<br>
+        ② 点下方平台徽标可直接跳转；更省事的是 <b>点"复制景区名"再到 App 里搜索</b>，看当天精确价。
+      </div>
+      <div class="btn-row" id="platformRow"></div>
+    </div>
+
+    <div class="card">
+      <h2>🚗 交通方式</h2>
+      <p class="hint" id="destHint"></p>
+      <div class="tr-tabs" id="trTabs">
+        <button data-tr="drive" class="active">🚙 自驾</button>
+        <button data-tr="train">🚄 高铁</button>
+        <button data-tr="taxi">🚕 打车</button>
+      </div>
+      <div class="tr-pane active" id="tp-drive"></div>
+      <div class="tr-pane" id="tp-train"></div>
+      <div class="tr-pane" id="tp-taxi"></div>
+      <div style="margin-top:12px; font-size:12.5px; color:var(--muted)">💡 预算里的交通费在「出行设置 → 出行成员」里按人设置（每人可填实际交通费）；此处三个页签仅作路线参考。</div>
+    </div>
+
+    <div class="card">
+      <h2>📌 详细地点速查（可一键导航）</h2>
+      <p class="hint">全部为核实后的详细地址，点击"地图"直接打开导航。</p>
+      <table id="stationTable"></table>
+      <div class="btn-row">
+        <button class="btn ghost small" id="btnWeather">🌦️ 查天气</button>
+        <button class="btn ghost small" id="btn12306home">🚄 12306官网</button>
+        <button class="btn ghost small" id="btnTaxiWeb">🚕 高德打车</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ TAB 2 装备清单 ============ -->
+  <section class="tab" id="tab-shop">
+    <div class="card">
+      <h2>🛒 漂流装备购买清单</h2>
+      <p class="hint">漂流必湿身，全员按"湿透"准备。这里是装备<b>目录与购买参考</b>（点淘宝/拼多多可搜同款）；要计入预算时，请到「出行规划 → 出行成员」里为<b>每个成员</b>勾选要带的装备。</p>
+      <div id="itemList"></div>
+
+      <div class="cat-label">➕ 自定义装备（自己补充）</div>
+      <div class="custom-add">
+        <input type="text" id="customName" placeholder="装备名称，如：潜水相机 / 晕车药" maxlength="20">
+        <input type="number" id="customPrice" placeholder="单价 ¥（可留空）" min="0" step="1">
+        <button class="btn primary small" id="btnAddCustom">＋ 添加</button>
+      </div>
+      <div id="customList"></div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3 预算 ============ -->
+  <section class="tab" id="tab-budget">
+    <div class="card">
+      <h2>🧮 预算总览</h2>
+      <p class="hint">按「出行规划」里每个成员的门票/交通/装备/餐饮自动汇总，逐人显示预算，再合成总预算表（价格为参考区间低值估算）。</p>
+      <div class="total-box">
+        <div><div class="lbl">预计总花费（全体）</div><div class="num" id="budgetTotal">¥0</div></div>
+        <div class="lbl" id="budgetPerCapita"></div>
+      </div>
+      <h3>费用明细</h3>
+      <div id="budgetDetail"></div>
+      <div class="btn-row">
+        <button class="btn orange small" id="btnCopyBudget">📋 复制预算</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💴 其他费用自定义</h2>
+      <p class="hint">储物柜 / 餐饮 / 停车可改，还能加任意自定义费用（保险、设备租赁等），全部进预算。</p>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
+        <label class="f">🔐 储物柜 ¥<input type="number" id="fxLocker" min="0" step="1"></label>
+        <label class="f">🍜 餐饮 ¥/人<input type="number" id="fxMeal" min="0" step="1"></label>
+        <label class="f">🅿️ 停车 ¥<input type="number" id="fxParking" min="0" step="1"></label>
+      </div>
+      <h3>➕ 自定义费用项</h3>
+      <div class="custom-add">
+        <input type="text" id="feeName" placeholder="费用名称，如：漂流保险 / 设备租赁" maxlength="20">
+        <input type="number" id="feeAmount" placeholder="金额 ¥" min="0" step="1">
+        <button class="btn primary small" id="btnAddFee">＋ 添加</button>
+      </div>
+      <div id="feeList"></div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 4 我的攻略 ============ -->
+  <section class="tab" id="tab-notes">
+    <div class="card">
+      <h2>✍️ 记攻略</h2>
+      <p class="hint">这里写随行攻略/注意事项，输入即自动保存（与右下角悬浮便签同步）。</p>
+      <textarea class="note" id="noteMain" placeholder="例如：\n- 周六早7点出发，走广清高速…\n- 到古龙峡先买玻霸+漂流联票\n- 储物柜只开一次，提前想好放什么\n- 黄腾峡淋浴可能是冷水，带好沐浴用品…"></textarea>
+      <div class="btn-row">
+        <button class="btn primary small" id="btnInsertDate">📅 插入日期</button>
+        <button class="btn primary small" id="btnInsertSpot">📍 插入预算</button>
+        <button class="btn ghost small" id="btnCopyNotes">📋 复制攻略</button>
+        <button class="btn ghost small" id="btnDownload">⬇️ 导出 .md</button>
+        <button class="btn ghost small" id="btnClearNotes">🗑️ 清空</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>✅ 出发前携带检查表</h2>
+      <p class="hint">勾选后自动保存，出发前对照检查。</p>
+      <div class="checklist" id="checklist"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  价格来自美团/携程/去哪儿/同程/永安等平台及攻略公开信息（2026年8月汇总），仅供规划参考，<b>实时票价与开漂时间请以景区官方及购票 App 当天为准</b>。本页数据仅保存在你本地浏览器。
+</footer>
+
+<!-- 悬浮便签 -->
+<button id="noteTabBtn">✍️ 记攻略</button>
+<div id="noteMask"></div>
+<div id="notePanel">
+  <div class="head" id="noteHead">
+    <span class="t">✍️ 记攻略</span>
+    <button class="x" id="noteClose">✕</button>
+  </div>
+  <div class="body">
+    <textarea id="noteFloating" placeholder="随手记，自动保存…"></textarea>
+    <div class="tools">
+      <button class="btn primary small" id="fInsertDate">📅 日期</button>
+      <button class="btn primary small" id="fInsertSpot">📍 票价</button>
+      <button class="btn ghost small" id="fCopy">复制</button>
+      <button class="btn ghost small" id="fGoFull">展开</button>
+    </div>
+    <div class="foot" id="noteCount">0 字 · 自动保存</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 数据 ================= */
+const SPOTS = {
+  gulongxia: {
+    name:'古龙峡生态旅游区', tag:'最刺激 · 国际赛道 · 玻璃桥',
+    hot:true, desc:'"浪尖上的过山车"，落差大速度快，兼有网红玻璃桥"云天玻霸"。',
+    addr:'广东省清远市清新区太和镇三坑滩（沿 G107 国道迳口入约 2 公里）',
+    bus:'清远市区打车约 30~50 元直达',
+    tickets:[
+      {name:'全程勇猛漂流', weekday:138, weekend:198, online:'¥238~260'},
+      {name:'云天玻霸（玻璃大峡谷）', weekday:128, weekend:138, online:'¥128~138'},
+      {name:'玻霸+漂流 联票（推荐）', weekday:298, weekend:348, online:'¥298~348'},
+      {name:'VIP 漂流（免排队）', weekday:690, weekend:690, online:'¥690'},
+      {name:'玻璃桥 单票', weekday:118, weekend:118, online:'¥118 起'},
+    ]
+  },
+  huangtengxia: {
+    name:'黄腾峡生态旅游区', tag:'漂流之王 · 河道长 · 天门悬廊',
+    hot:true, desc:'"漂流之王/皇"，河道长落差大，兼有"天门悬廊"玻璃桥与灯光秀。',
+    addr:'广东省清远市清城区东城街石板村', phone:'(0763)3906999',
+    bus:'公交 260 路到"黄腾峡生态旅游区"站',
+    tickets:[
+      {name:'观景勇士漂（~60分钟/2km）', weekday:128, weekend:148, online:'¥98 起'},
+      {name:'天然猛士漂（~90分钟/2.8km）', weekday:178, weekend:208, online:'¥158 起'},
+      {name:'勇猛全程漂（~150分钟/4.8km）', weekday:238, weekend:288, online:'¥238 起'},
+      {name:'天门悬廊玻璃桥', weekday:118, weekend:118, online:'¥118'},
+      {name:'天门悬廊灯光秀', weekday:88, weekend:88, online:'¥88 起'},
+    ]
+  },
+  xuanzhen: {
+    name:'玄真漂流', tag:'中等刺激 · 玩法多 · 夜漂溪降',
+    hot:false, desc:'溪降/溶洞漂/夜漂/跳台，拍照出片，适合闺蜜情侣、想玩花样。',
+    addr:'清远市清新区太和镇玄真路尾', phone:'0763-5829988',
+    bus:'清远市区打车约 20 分钟',
+    tickets:[
+      {name:'溪降+赛道 套票', weekday:198, weekend:198, online:'¥198'},
+      {name:'漂流（单）', weekday:128, weekend:148, online:'¥128 起'},
+    ]
+  },
+  bijiashan: {
+    name:'笔架山旅游区（青龙峡漂流）', tag:'原生态 · 树荫不晒 · 高性价比',
+    hot:false, desc:'森林峡谷树荫浓密水质好，偏平缓，适合亲子家庭、不想太刺激。',
+    addr:'清远市清新区太和镇笔架山旅游区', phone:'0763-3988288',
+    bus:'距清远市区约 5 公里',
+    tickets:[
+      {name:'全程漂流', weekday:88, weekend:88, online:'¥88'},
+      {name:'漂流+瀑布', weekday:128, weekend:128, online:'¥128'},
+    ]
+  },
+};
+
+const STATIONS = [
+  {name:'古龙峡生态旅游区', addr:'清远市清新区太和镇三坑滩（G107 国道迳口入 2 公里）'},
+  {name:'黄腾峡生态旅游区', addr:'清远市清城区东城街石板村 · 电话 (0763)3906999'},
+  {name:'玄真漂流', addr:'清远市清新区太和镇玄真路尾 · 电话 0763-5829988'},
+  {name:'笔架山旅游区（青龙峡漂流）', addr:'清远市清新区太和镇笔架山旅游区 · 电话 0763-3988288'},
+  {name:'清远站（高铁）', addr:'清远市清城区洲心街道（洲心镇）站前路一带 · 广州南→清远约 20~30 分钟'},
+  {name:'清城站（广清城际）', addr:'清远市清城区洲心街道，湖城大道与凤翔南路交叉口西北角'},
+  {name:'广州南站（出发）', addr:'广州市番禺区南站北路'},
+];
+
+const ITEMS = [
+  {id:'waterproof_bag', cat:'必带', name:'手机防水袋', price:[2,10], scene:'景区现场 ¥10~30', desc:'TPU 材质 ≥0.3mm、双密封扣；出发前装纸巾测漏', taobao:'手机防水袋 TPU 双扣', pdd:'手机防水袋 TPU 漂流'},
+  {id:'clothes', cat:'必带', name:'换洗衣物（从里到外一套）', price:[0,0], desc:'含内衣裤 + 一次性内裤 + 毛巾/一次性浴巾', taobao:'一次性内裤 旅行', pdd:'一次性内裤'},
+  {id:'quickdry', cat:'必带', name:'速干衣 / 泳衣', price:[30,80], desc:'穿身上漂，别穿浅色易透、别穿裙子', taobao:'速干衣 男女户外', pdd:'速干衣'},
+  {id:'shoes', cat:'必带', name:'洞洞鞋 / 溯溪鞋（带后跟带）', price:[15,40], desc:'⚠️ 千万别穿拖鞋/人字拖，会被冲走；赤脚会划伤', taobao:'洞洞鞋 户外溯溪鞋', pdd:'洞洞鞋 拖鞋'},
+  {id:'scoop', cat:'必带', name:'水瓢 / 水枪', price:[2,15], scene:'水瓢网上 ¥2~5，景区 ¥15', desc:'打水仗没武器只能挨泼', taobao:'漂流水瓢 水枪 打水仗', pdd:'漂流水瓢'},
+  {id:'pouch', cat:'必带', name:'防水袋 / 塑料袋', price:[2,10], desc:'装湿衣服、隔水', taobao:'防水袋 收纳袋', pdd:'防水袋'},
+  {id:'sunscreen', cat:'必带', name:'防晒霜 + 冰袖 + 防晒衣', price:[30,80], desc:'硬防晒最靠谱，还能防擦伤', taobao:'防晒冰袖 防晒衣 UPF50', pdd:'防晒冰袖'},
+  {id:'idcard', cat:'必带', name:'身份证', price:[0,0], desc:'取票/实名，部分景区要'},
+  {id:'goggles', cat:'建议', name:'护目镜 / 泳镜 + 耳塞', price:[10,30], desc:'防水进眼、进耳', taobao:'泳镜 护目镜 耳塞', pdd:'泳镜'},
+  {id:'glasses_rope', cat:'建议', name:'眼镜绳（近视者）', price:[5,10], desc:'别戴隐形/美瞳，框架眼镜要挂绳', taobao:'眼镜绳 防滑挂绳', pdd:'眼镜绳'},
+  {id:'towel', cat:'建议', name:'干发巾 / 浴巾', price:[10,30], desc:'漂完擦干', taobao:'速干浴巾 干发帽', pdd:'速干毛巾'},
+  {id:'shampoo', cat:'建议', name:'洗发水 / 沐浴露小样', price:[5,15], desc:'景区淋浴可能没有沐浴用品', taobao:'旅行装 洗发水 沐浴露', pdd:'旅行装洗发水'},
+  {id:'firstaid', cat:'建议', name:'创可贴 / 碘伏 / 藿香正气丸', price:[10,20], desc:'防擦伤、防暑', taobao:'创可贴 藿香正气丸', pdd:'创可贴'},
+  {id:'cash', cat:'建议', name:'少量现金', price:[100,100], desc:'部分店铺只收现金（¥100 内）'},
+  {id:'ginger', cat:'建议', name:'姜茶 / 保温杯', price:[5,20], desc:'漂完驱寒', taobao:'姜茶 保温杯', pdd:'姜茶'},
+];
+
+const CHECKLIST = [
+  '手机防水袋已做测漏', '换洗衣物带齐（含内衣）', '洞洞鞋/溯溪鞋（非拖鞋）',
+  '身份证已带', '防晒已涂/冰袖已带', '少量现金', '水瓢或水枪', '充电宝',
+];
+
+const PLATFORMS = [
+  {n:'携程', url:'https://piao.ctrip.com/', dot:'#0e7c86'},
+  {n:'美团', url:'https://www.meituan.com/', dot:'#f7c600'},
+  {n:'去哪儿', url:'http://piao.qunar.com/', dot:'#2aa3e0'},
+  {n:'同程', url:'https://www.ly.com/', dot:'#00b59b'},
+  {n:'大众点评', url:'https://www.dianping.com/qingyuan', dot:'#ff6633'},
+];
+
+const FROM_OPTS = [
+  {v:'gz',       label:'广州',            drive:100, train:130, taxi:150},
+  {v:'gz-south', label:'广州南站（高铁出发）', drive:110, train:120, taxi:160},
+  {v:'fs',       label:'佛山',            drive:90,  train:110, taxi:130},
+  {v:'dg',       label:'东莞',            drive:120, train:150, taxi:170},
+  {v:'sz',       label:'深圳',            drive:180, train:190, taxi:230},
+  {v:'zh',       label:'珠海',            drive:210, train:220, taxi:270},
+  {v:'zs',       label:'中山',            drive:140, train:160, taxi:190},
+  {v:'hz',       label:'惠州',            drive:160, train:180, taxi:210},
+  {v:'jm',       label:'江门',            drive:130, train:150, taxi:180},
+  {v:'zq',       label:'肇庆',            drive:110, train:130, taxi:160},
+  {v:'qy',       label:'清远（本地）',     drive:30,  train:0,   taxi:40},
+  {v:'other',    label:'其他城市',         drive:150, train:160, taxi:200},
+];
+const TRANSPORT_OPTS = [
+  {v:'drive', label:'🚙 自驾'},
+  {v:'train', label:'🚄 高铁'},
+  {v:'taxi', label:'🚕 打车'},
+];
+
+const DAYS = ['日','一','二','三','四','五','六'];
+const $ = s => document.querySelector(s);
+const esc = encodeURIComponent;
+
+/* ================= 状态 ================= */
+const LS_KEY = 'qyraft_state_v1';
+let state = load();
+if(!state.spot) state.spot = 'gulongxia';
+if(!state.date) state.date = '2026-08-28';
+if(!state.customItems) state.customItems = [];
+if(!state.customTicketPrices) state.customTicketPrices = {};
+if(!state.customFixed) state.customFixed = { locker:30, meal:50, parking:20 };
+if(!state.customFees) state.customFees = [];
+if(!state.checklist) state.checklist = {};
+if(!state.notes) state.notes = '';
+if(!Array.isArray(state.members) || !state.members.length){
+  state.members = [{ id:'m_0', name:'成员1', from:'gz', transport:'drive', customCost:null }];
+}
+// 迁移/补齐成员字段：票种、装备
+state.members.forEach(m=>{ if(!Number.isInteger(m.ticketIdx)) m.ticketIdx = defaultTicketIdx(state.spot); if(!m.items) m.items = {}; });
+CHECKLIST.forEach(c=>{ if(state.checklist[c] == null) state.checklist[c] = false; });
+
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }catch(e){ return {}; } }
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+
+function parseDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function dayType(s){ const d=parseDate(s).getDay(); return (d===0||d===6)?'weekend':'weekday'; }
+function fmtDate(s){ const d=parseDate(s); return `${d.getMonth()+1}月${d.getDate()}日 星期${DAYS[d.getDay()]}`; }
+
+/* ================= 成员 ================= */
+function defaultTicketIdx(spotId){ return spotId==='gulongxia' ? 2 : 0; }
+/* 票价自定义：按票种（每个景区、每种票可单独填） */
+function ticketCustomPrice(spotId, idx){
+  const m = state.customTicketPrices && state.customTicketPrices[spotId];
+  const v = m && m[idx];
+  return (v == null) ? null : v;
+}
+function setTicketCustomPrice(spotId, idx, val){
+  const str = String(val).trim();
+  const num = (str==='') ? null : Math.max(0, parseInt(str)||0);
+  if(!state.customTicketPrices) state.customTicketPrices = {};
+  if(!state.customTicketPrices[spotId]) state.customTicketPrices[spotId] = {};
+  if(num == null) delete state.customTicketPrices[spotId][idx];
+  else state.customTicketPrices[spotId][idx] = num;
+}
+function ticketEffectivePrice(spotId, idx, dt){
+  const cp = ticketCustomPrice(spotId, idx);
+  if(cp != null) return cp;
+  const t = SPOTS[spotId].tickets[idx];
+  return dt==='weekend' ? t.weekend : t.weekday;
+}
+function allItems(){
+  return [
+    ...ITEMS.map(it=>({id:it.id, name:it.name, price:it.price[0], cat:it.cat})),
+    ...state.customItems.map(c=>({id:c.id, name:c.name, price:c.price||0, cat:'自定义'}))
+  ];
+}
+function memberGear(m){
+  let cost=0, names=[];
+  const byId={}; allItems().forEach(a=>byId[a.id]=a);
+  Object.keys(m.items||{}).forEach(id=>{ if(m.items[id] && byId[id] && byId[id].price>0){ cost+=byId[id].price; names.push(byId[id].name); } });
+  return {cost, names};
+}
+function newMember(){
+  return { id:'m_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    name:'成员'+(state.members.length+1), from:'gz', transport:'drive', customCost:null,
+    ticketIdx: defaultTicketIdx(state.spot), items:{} };
+}
+function memberTransportCost(m){
+  if(m.customCost != null) return m.customCost;
+  const f = FROM_OPTS.find(o=>o.v===m.from) || FROM_OPTS[0];
+  if(m.transport==='train') return f.train;
+  if(m.transport==='taxi') return f.taxi;
+  return f.drive;
+}
+function memberTransportLabel(m){
+  const f = (FROM_OPTS.find(o=>o.v===m.from)||{}).label || m.from;
+  const t = (TRANSPORT_OPTS.find(o=>o.v===m.transport)||{}).label || m.transport;
+  return `${f} · ${t}${m.customCost!=null?' · 自定义':''}`;
+}
+function renderMembers(){
+  const s = SPOTS[state.spot];
+  const dt = dayType(state.date);
+  const list = state.members;
+  const all = allItems();
+  $('#memberList').innerHTML = '';
+  list.forEach((m, i)=>{
+    if(!Number.isInteger(m.ticketIdx) || m.ticketIdx<0 || m.ticketIdx>=s.tickets.length) m.ticketIdx = 0;
+    if(!m.items) m.items = {};
+    const g = memberGear(m);
+    const el = document.createElement('div');
+    el.className = 'member-card';
+    el.innerHTML = `
+      <div class="mc-top">
+        <span class="mc-badge">👤 ${i+1}</span>
+        <input type="text" class="m-name" maxlength="10" value="${escHtml(m.name)}" placeholder="名称">
+        <button class="btn ghost small m-del">🗑 删除</button>
+      </div>
+      <div class="mc-grid">
+        <label class="f">出发地
+          <select class="m-from">${FROM_OPTS.map(o=>`<option value="${o.v}" ${o.v===m.from?'selected':''}>${o.label}</option>`).join('')}</select>
+        </label>
+        <label class="f">交通
+          <select class="m-transport">${TRANSPORT_OPTS.map(o=>`<option value="${o.v}" ${o.v===m.transport?'selected':''}>${o.label}</option>`).join('')}</select>
+        </label>
+        <label class="f">交通费 ¥（留空按估算 ¥${memberTransportCost(m)}）
+          <input type="number" class="m-cost" min="0" step="1" placeholder="估算 ¥${memberTransportCost(m)}" value="${m.customCost==null?'':m.customCost}">
+        </label>
+        <label class="f">票种
+          <select class="m-ticket">${s.tickets.map((t,ti)=>{ const cp=ticketCustomPrice(state.spot,ti); const p=(cp!=null)?'自定义¥'+cp:'¥'+(dt==='weekend'?t.weekend:t.weekday); return `<option value="${ti}" ${ti===m.ticketIdx?'selected':''}>${t.name}（${p}）</option>`; }).join('')}</select>
+        </label>
+      </div>
+      <button class="mc-toggle" type="button">🛒 装备（已选 ${g.names.length} 件 · ¥${g.cost}）▾</button>
+      <div class="mc-items" hidden>${all.map(a=>`<label class="mchip ${m.items[a.id]?'on':''}"><input type="checkbox" ${m.items[a.id]?'checked':''} data-i="${a.id}"><span>${escHtml(a.name)}</span>${a.price?`<i>¥${a.price}</i>`:''}</label>`).join('')}</div>`;
+
+    el.querySelector('.m-name').addEventListener('change', e=>{ m.name = e.target.value.trim() || ('成员'+(i+1)); save(); renderBudget(); });
+    el.querySelector('.m-from').addEventListener('change', e=>{ m.from = e.target.value; save(); renderMembers(); renderBudget(); });
+    el.querySelector('.m-transport').addEventListener('change', e=>{ m.transport = e.target.value; save(); renderBudget(); });
+    el.querySelector('.m-cost').addEventListener('change', e=>{ const v=e.target.value; m.customCost = (v==='')?null:Math.max(0,parseInt(v)||0); save(); renderBudget(); });
+    el.querySelector('.m-ticket').addEventListener('change', e=>{ m.ticketIdx = parseInt(e.target.value)||0; save(); renderBudget(); });
+    const toggle = el.querySelector('.mc-toggle'), itemsBox = el.querySelector('.mc-items');
+    toggle.addEventListener('click', ()=>{ const hidden = itemsBox.hidden; itemsBox.hidden = !hidden; const gg = memberGear(m); toggle.textContent = `🛒 装备（已选 ${gg.names.length} 件 · ¥${gg.cost}）${hidden?'▴':'▾'}`; });
+    el.querySelectorAll('.mchip input').forEach(ch=>{
+      ch.addEventListener('change', e=>{
+        m.items[ch.dataset.i] = ch.checked;
+        const gg = memberGear(m);
+        toggle.textContent = `🛒 装备（已选 ${gg.names.length} 件 · ¥${gg.cost}）▴`;
+        ch.closest('.mchip').classList.toggle('on', ch.checked);
+        save(); renderBudget();
+      });
+    });
+    el.querySelector('.m-del').addEventListener('click', ()=>{ if(state.members.length<=1){ toast('至少保留 1 名成员'); return; } state.members.splice(i,1); save(); renderMembers(); renderBudget(); });
+    $('#memberList').appendChild(el);
+  });
+}
+function addMember(){ state.members.push(newMember()); save(); renderMembers(); renderBudget(); toast('已添加成员 ✓'); }
+
+/* ================= Tab 切换 ================= */
+document.querySelectorAll('#tabs button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('section.tab').forEach(s=>s.classList.remove('active'));
+    $('#tab-'+b.dataset.tab).classList.add('active');
+  });
+});
+
+/* ================= 渲染：日期 ================= */
+function renderDate(){
+  $('#date').value = state.date;
+  const dt = dayType(state.date);
+  const label = dt==='weekend' ? '周末/高峰档' : '工作日档';
+  $('#dayType').innerHTML = `所选 <b>${fmtDate(state.date)}</b> → 按 <b>${label}</b> 计票；若为法定节假日，按周末/高峰价，以景区为准。`;
+}
+
+/* ================= 渲染：景点卡片 ================= */
+function renderSpots(){
+  $('#spotCards').innerHTML = Object.entries(SPOTS).map(([id,s])=>{
+    const low = Math.min(...s.tickets.map(t=>t.weekday));
+    return `<div class="spot ${id===state.spot?'sel':''}" data-id="${id}">
+      <div class="check">✓</div>
+      <div class="nm">${s.name}</div>
+      <div><span class="tag ${s.hot?'hot':''}">${s.tag}</span></div>
+      <div class="price">低至 ¥${low} 起</div>
+      <div class="desc">${s.desc}</div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.spot').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.spot = el.dataset.id; state.members.forEach(m=>{ m.ticketIdx = defaultTicketIdx(state.spot); }); save(); renderAll(); });
+  });
+}
+
+/* ================= 渲染：票价表 ================= */
+function renderTickets(){
+  const s = SPOTS[state.spot];
+  const dt = dayType(state.date);
+  $('#ticketHint').textContent = `当前景区：${s.name} · ${fmtDate(state.date)}（${dt==='weekend'?'周末档':'工作日档'}）。在「自定义价」列按票种填实际价，选了该票种的成员预算自动按它算。`;
+  let rows = `<tr><th>票种</th><th>工作日</th><th>周末</th><th>线上参考价</th><th>自定义价（¥/人）</th></tr>`;
+  s.tickets.forEach((t,i)=>{
+    const cp = ticketCustomPrice(state.spot, i);
+    rows += `<tr>
+      <td>${t.name}</td>
+      <td class="${dt==='weekday'?'hl':''}">${dt==='weekday'?'→':''}¥${t.weekday}</td>
+      <td class="${dt==='weekend'?'hl':''}">${dt==='weekend'?'→':''}¥${t.weekend}</td>
+      <td class="price-num">${t.online}</td>
+      <td><input type="number" class="t-custom" data-i="${i}" min="0" step="1" value="${cp==null?'':cp}" placeholder="留空=参考价"></td>
+    </tr>`;
+  });
+  $('#ticketTable').innerHTML = rows;
+  document.querySelectorAll('#ticketTable .t-custom').forEach(inp=>{
+    inp.addEventListener('change', e=>{ setTicketCustomPrice(state.spot, parseInt(inp.dataset.i), inp.value); save(); renderMembers(); renderBudget(); });
+  });
+}
+
+/* ================= 渲染：购票/平台按钮 ================= */
+function renderBuy(){
+  const s = SPOTS[state.spot];
+  $('#buyBtns').innerHTML = `
+    <button class="btn orange" id="btnSearchTicket">🔍 一键搜「${s.name}」票价</button>
+    <button class="btn ghost" id="btnCopySpot">📋 复制景区名</button>`;
+  $('#btnSearchTicket').onclick = ()=> window.open('https://www.baidu.com/s?wd='+esc(s.name+' 门票 价格'), '_blank');
+  $('#btnCopySpot').onclick = ()=> copyText(s.name);
+  $('#platformRow').innerHTML = PLATFORMS.map(p=>`<a class="plat" href="${p.url}" target="_blank" rel="noopener"><span class="dot" style="background:${p.dot}"></span>${p.n}</a>`).join('')
+    + `<button class="plat" id="btnCopySpot2">📋 复制景区名去 App 搜</button>`;
+  $('#btnCopySpot2').onclick = ()=> copyText(s.name);
+}
+
+/* ================= 渲染：交通 ================= */
+function renderTransport(){
+  const s = SPOTS[state.spot];
+  $('#destHint').innerHTML = `目的地：<b>${s.name}</b>　<a href="https://www.amap.com/search?query=${esc(s.name)}" target="_blank">高德导航 ↗</a> · <a href="https://map.baidu.com/search/${esc(s.name)}" target="_blank">百度地图 ↗</a>`;
+  // 自驾
+  $('#tp-drive').innerHTML = `
+    <div class="step"><div class="n">1</div><div class="c"><b>路线</b>：广州 → 广清高速(G55)/许广高速 → 清连高速，全程约 80~100 公里，约 1~1.5 小时。<div class="addr">节假日尽量 9 点前出发，上山路段易堵。</div></div></div>
+    <div class="step"><div class="n">2</div><div class="c"><b>导航目的地</b>：${s.name}<div class="addr">${s.addr}</div></div></div>
+    <div class="step"><div class="n">3</div><div class="c"><b>停车</b>：古龙峡/黄腾峡收费停车；笔架山约 ¥15~20/天。</div></div>
+    <div class="btn-row">
+      <a class="btn primary" href="https://www.amap.com/search?query=${esc(s.name)}" target="_blank">🗺️ 高德导航</a>
+      <a class="btn ghost" href="https://map.baidu.com/search/${esc(s.name)}" target="_blank">🗺️ 百度导航</a>
+    </div>`;
+
+  // 高铁
+  const dep = '广州南站';
+  $('#tp-train').innerHTML = `
+    <div class="step"><div class="n">1</div><div class="c"><b>坐高铁</b>：${dep} → <b>清远站</b>（京广高铁），约 20~30 分钟，二等座约 ¥40~60。<div class="addr">清远站：清远市清城区洲心街道（洲心镇）站前路一带。</div></div></div>
+    <div class="step"><div class="n">2</div><div class="c"><b>出站换乘</b>：清远站打车到 ${s.name} 约 ${s.name==='黄腾峡生态旅游区'?'35 元':'30~50 元'}（正规网约车，别坐黑车）。<div class="addr">目的地：${s.addr}</div></div></div>
+    <div class="step"><div class="n">3</div><div class="c"><b>提示</b>：也可乘广清城际到「清城站」（湖城大道与凤翔南路交叉口西北角），再打车到景区。</div></div>
+    <div class="btn-row">
+      <a class="btn primary" href="https://kyfw.12306.cn/otn/leftTicket/init" target="_blank">🚄 12306 查余票</a>
+      <a class="btn ghost" href="https://www.12306.cn/index/" target="_blank">12306 官网</a>
+      <a class="btn orange" href="https://dache.amap.com/" target="_blank">🚕 高德打车</a>
+    </div>`;
+
+  // 打车
+  $('#tp-taxi').innerHTML = `
+    <div class="step"><div class="n">1</div><div class="c"><b>目的地</b>：${s.name}<div class="addr">${s.addr}</div></div></div>
+    <div class="step"><div class="n">2</div><div class="c"><b>叫车</b>：高德/滴滴 App 直接定位「${s.name}」，或点下方网页打车入口。清远站→景区约 30~50 元。</div></div>
+    <div class="step"><div class="n">3</div><div class="c"><b>提示</b>：出站/出景区建议用正规网约车，避免路边黑车抬价。</div></div>
+    <div class="btn-row">
+      <a class="btn orange" href="https://dache.amap.com/" target="_blank">🚕 高德打车</a>
+      <a class="btn primary" href="https://www.amap.com/search?query=${esc(s.name)}" target="_blank">🗺️ 高德定位</a>
+    </div>`;
+}
+
+/* ================= 渲染：地点表 ================= */
+function renderStations(){
+  $('#stationTable').innerHTML = `<tr><th>地点</th><th>详细地址</th><th>操作</th></tr>` +
+    STATIONS.map(s=>`<tr><td><b>${s.name}</b></td><td>${s.addr}</td>
+      <td><a href="https://www.amap.com/search?query=${esc(s.name)}" target="_blank" style="white-space:nowrap">地图 ↗</a></td></tr>`).join('');
+}
+
+/* ================= 渲染：装备清单 ================= */
+function renderItems(){
+  let html='';
+  let lastCat='';
+  ITEMS.forEach(it=>{
+    if(it.cat!==lastCat){ html+=`<div class="cat-label">${it.cat==='必带'?'🔴 必带（不买会后悔）':'🟡 强烈建议带'}</div>`; lastCat=it.cat; }
+    const buy = [];
+    if(it.taobao) buy.push(`<a href="https://s.taobao.com/search?q=${esc(it.taobao)}" target="_blank" rel="noopener">🍑 淘宝</a>`);
+    if(it.pdd) buy.push(`<a href="https://mobile.yangkeduo.com/search_result.html?search_key=${esc(it.pdd||it.name)}" target="_blank" rel="noopener">🛍️ 拼多多</a>`);
+    const priceTxt = it.price[0]===0 ? '自带' : `¥${it.price[0]}~${it.price[1]}${it.scene?'（'+it.scene+'）':''}`;
+    html += `<div class="item">
+      <div class="main">
+        <div class="nm">${it.name}</div>
+        <div class="desc">${it.desc}</div>
+        <div class="pr">${priceTxt}</div>
+        ${buy.length?`<div class="buy">${buy.join('')}</div>`:''}
+      </div>
+    </div>`;
+  });
+  $('#itemList').innerHTML = html;
+}
+
+/* ================= 渲染：清单 ================= */
+function renderChecklist(){
+  $('#checklist').innerHTML = CHECKLIST.map(c=>{
+    const on = state.checklist[c];
+    return `<label class="chk"><input type="checkbox" ${on?'checked':''} data-chk="${esc(c)}"> ${c}</label>`;
+  }).join('');
+  document.querySelectorAll('#checklist [data-chk]').forEach(el=>{
+    el.addEventListener('change', e=>{ state.checklist[el.dataset.chk] = e.target.checked; save(); });
+  });
+}
+
+/* ================= 自定义装备 ================= */
+function escHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function addCustom(){
+  const name = $('#customName').value.trim();
+  if(!name){ toast('先填装备名称'); return; }
+  const price = Math.max(0, parseInt($('#customPrice').value)||0);
+  state.customItems.push({ id:'c_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, price });
+  save();
+  $('#customName').value=''; $('#customPrice').value='';
+  renderCustom(); renderMembers(); renderBudget(); toast('已添加 ✓');
+}
+function renderCustom(){
+  const list = state.customItems;
+  if(!list.length){
+    $('#customList').innerHTML = '<div class="hint" style="margin:4px 0">还没有自定义装备 —— 上面输入名称和单价点「添加」，会自动出现在每个成员的「🛒 装备」勾选里。</div>';
+    return;
+  }
+  $('#customList').innerHTML = '';
+  list.forEach((it, i)=>{
+    const el = document.createElement('div');
+    el.className = 'custom-item';
+    el.innerHTML = `
+      <span class="nm">${escHtml(it.name)}</span>
+      <span style="font-size:12px;color:var(--muted)">单价</span>
+      <input type="number" min="0" step="1" value="${it.price||0}" data-c="price" placeholder="0">
+      <button class="btn ghost small" data-c="del" title="删除">🗑</button>`;
+    el.querySelector('[data-c="price"]').addEventListener('change', e=>{ it.price=Math.max(0, parseInt(e.target.value)||0); save(); renderBudget(); });
+    el.querySelector('[data-c="del"]').addEventListener('click', ()=>{ state.customItems.splice(i,1); save(); renderCustom(); renderMembers(); renderBudget(); toast('已删除'); });
+    $('#customList').appendChild(el);
+  });
+}
+
+/* ================= 费用自定义 ================= */
+function renderFeeCustom(){
+  const fx = state.customFixed;
+  $('#fxLocker').value = fx.locker; $('#fxMeal').value = fx.meal; $('#fxParking').value = fx.parking;
+  const list = state.customFees;
+  if(!list.length){ $('#feeList').innerHTML = '<div class="hint" style="margin:4px 0">还没有自定义费用 —— 上面输入名称和金额点「添加」。</div>'; return; }
+  $('#feeList').innerHTML = '';
+  list.forEach((f, i)=>{
+    const el = document.createElement('div');
+    el.className = 'custom-item';
+    el.innerHTML = `<span class="nm">${escHtml(f.name)}</span>
+      <span style="font-size:12px;color:var(--muted)">金额</span>
+      <input type="number" min="0" step="1" value="${f.amount}" data-c="amt">
+      <button class="btn ghost small" data-c="del" title="删除">🗑</button>`;
+    el.querySelector('[data-c="amt"]').addEventListener('change', e=>{ f.amount = Math.max(0, parseInt(e.target.value)||0); save(); renderBudget(); });
+    el.querySelector('[data-c="del"]').addEventListener('click', ()=>{ state.customFees.splice(i,1); save(); renderFeeCustom(); renderBudget(); toast('已删除'); });
+    $('#feeList').appendChild(el);
+  });
+}
+function addFee(){
+  const name = $('#feeName').value.trim();
+  if(!name){ toast('先填费用名称'); return; }
+  const amount = Math.max(0, parseInt($('#feeAmount').value)||0);
+  state.customFees.push({ id:'f_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, amount });
+  save(); $('#feeName').value=''; $('#feeAmount').value='';
+  renderFeeCustom(); renderBudget(); toast('已添加 ✓');
+}
+
+/* ================= 预算 ================= */
+function calcBudget(){
+  const s = SPOTS[state.spot];
+  const dt = dayType(state.date);
+  const members = state.members || [];
+  const N = members.length || 1;
+
+  const fx = state.customFixed;
+  const mealPer = fx.meal || 0;
+  const locker = fx.locker || 0;
+  const hasDriver = members.some(m=>m.transport==='drive');
+  const parking = hasDriver ? (fx.parking || 0) : 0;
+  const customFees = state.customFees || [];
+  const customFeesTotal = customFees.reduce((a,f)=>a+(f.amount||0), 0);
+  const sharedTotal = locker + parking + customFeesTotal;
+  const sharedPer = sharedTotal / N;
+
+  const membersCalc = members.map(m=>{
+    const tickets = s.tickets;
+    let ti = m.ticketIdx;
+    if(!Number.isInteger(ti) || ti<0 || ti>=tickets.length) ti = 0;
+    const tk = tickets[ti];
+    const tp = ticketEffectivePrice(state.spot, ti, dt);
+    const transport = memberTransportCost(m);
+    const g = memberGear(m);
+    const subtotal = tp + transport + g.cost + mealPer + sharedPer;
+    return { m, ticketIdx:ti, tk, tp, transport, gear:g.cost, gearNames:g.names, meal:mealPer, shared:sharedPer, subtotal };
+  });
+
+  const ticketTotal = membersCalc.reduce((a,x)=>a+x.tp,0);
+  const transportTotal = membersCalc.reduce((a,x)=>a+x.transport,0);
+  const gearTotal = membersCalc.reduce((a,x)=>a+x.gear,0);
+  const mealTotal = mealPer * N;
+  const total = ticketTotal + transportTotal + gearTotal + mealTotal + locker + parking + customFeesTotal;
+
+  return {s, N, ticketTotal, transportTotal, gearTotal, mealPer, mealTotal, locker, parking, customFees, customFeesTotal, sharedTotal, sharedPer, members:membersCalc, total};
+}
+
+function renderBudget(){
+  const b = calcBudget();
+  $('#budgetTotal').textContent = '¥' + Math.round(b.total);
+  $('#budgetPerCapita').textContent = `共 ${b.N} 人 · 人均约 ¥${Math.round(b.total/b.N)}`;
+
+  const memberRows = b.members.map(x=>`
+    <div class="member-budget">
+      <div class="mb-head">👤 ${escHtml(x.m.name)} <span class="mb-sub">${escHtml(memberTransportLabel(x.m))}</span></div>
+      <div class="mb-line"><span>🎟️ ${escHtml(x.tk.name)}</span><span>¥${x.tp}</span></div>
+      <div class="mb-line"><span>🚗 交通</span><span>¥${x.transport}</span></div>
+      <div class="mb-line"><span>🛒 装备${x.gearNames.length?' · '+escHtml(x.gearNames.join('、')):''}</span><span>¥${x.gear}</span></div>
+      <div class="mb-line"><span>🍜 餐饮</span><span>¥${x.meal}</span></div>
+      <div class="mb-line"><span>🧺 分摊（储物柜+停车+杂费）</span><span>¥${Math.round(x.shared)}</span></div>
+      <div class="mb-line total"><span>小计</span><span>¥${Math.round(x.subtotal)}</span></div>
+    </div>`).join('');
+
+  $('#budgetDetail').innerHTML = `
+    <div class="member-grid">${memberRows}</div>
+    <h3 style="margin-top:16px">📊 总预算表</h3>
+    <table class="summary">
+      <tr><th>项目</th><th>金额</th></tr>
+      <tr><td>🎟️ 门票（${b.N} 人）</td><td class="price-num">¥${b.ticketTotal}</td></tr>
+      <tr><td>🚗 交通（${b.N} 人）</td><td class="price-num">¥${b.transportTotal}</td></tr>
+      <tr><td>🛒 装备（全员合计）</td><td class="price-num">¥${b.gearTotal}</td></tr>
+      <tr><td>🍜 餐饮（${b.N} 人）</td><td class="price-num">¥${b.mealTotal}</td></tr>
+      <tr><td>🔐 储物柜</td><td class="price-num">¥${b.locker}</td></tr>
+      ${b.parking?`<tr><td>🅿️ 停车</td><td class="price-num">¥${b.parking}</td></tr>`:''}
+      ${b.customFees.map(f=>`<tr><td>💴 ${escHtml(f.name)}</td><td class="price-num">¥${f.amount}</td></tr>`).join('')}
+      <tr class="grand"><td>💰 总预算</td><td class="price-num">¥${Math.round(b.total)}</td></tr>
+    </table>`;
+}
+
+/* ================= 便签 ================= */
+function noteCount(){
+  const n = state.notes.length;
+  $('#noteCount').textContent = `${n} 字 · 自动保存`;
+}
+function syncNotes(src){
+  const v = src.value;
+  state.notes = v; save(); noteCount();
+  if(src.id==='noteMain' && $('#noteFloating').value!==v) $('#noteFloating').value = v;
+  if(src.id==='noteFloating' && $('#noteMain').value!==v) $('#noteMain').value = v;
+}
+
+/* ================= 悬浮便签开关/拖动 ================= */
+const panel = $('#notePanel'), mask = $('#noteMask');
+function openNote(){ panel.classList.add('open'); mask.classList.add('show'); }
+function closeNote(){ panel.classList.remove('open'); mask.classList.remove('show'); }
+$('#noteTabBtn').addEventListener('click', openNote);
+$('#noteClose').addEventListener('click', closeNote);
+mask.addEventListener('click', closeNote);
+// 拖动
+(function(){
+  const head = $('#noteHead'); let sx=0, sy=0, dragging=false, offX=0, offY=0, moved=false;
+  head.addEventListener('pointerdown', e=>{ dragging=true; moved=false; sx=e.clientX; sy=e.clientY;
+    const r=panel.getBoundingClientRect(); offX=e.clientX-r.left; offY=e.clientY-r.top;
+    head.setPointerCapture(e.pointerId); });
+  head.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    if(Math.abs(dx)>3||Math.abs(dy)>3) moved=true;
+    if(moved){
+      let x=e.clientX-offX, y=e.clientY-offY;
+      x=Math.max(-panel.offsetWidth+60, Math.min(window.innerWidth-60, x));
+      y=Math.max(0, Math.min(window.innerHeight-60, y));
+      panel.style.left=x+'px'; panel.style.top=y+'px'; panel.style.right='auto'; panel.style.height='440px';
+    }
+  });
+  head.addEventListener('pointerup', ()=>{ dragging=false; });
+})();
+
+/* ================= 复制/下载 ================= */
+function copyText(t){
+  const done = ()=> toast('已复制到剪贴板 ✓');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done).catch(()=>fallbackCopy(t,done));
+  } else fallbackCopy(t,done);
+}
+function fallbackCopy(t, cb){
+  const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta);
+  ta.select(); try{ document.execCommand('copy'); cb(); }catch(e){} document.body.removeChild(ta);
+}
+function toast(msg){
+  const el=$('#toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'), 1800);
+}
+function buildMarkdown(){
+  const b = calcBudget();
+  const memberMd = b.members.map(x=>
+    `- ${x.m.name}（${memberTransportLabel(x.m)}）：票「${x.tk.name}」¥${x.tp} + 交通 ¥${x.transport} + 装备 ¥${x.gear} + 餐饮 ¥${x.meal} + 分摊 ¥${Math.round(x.shared)} ≈ ¥${Math.round(x.subtotal)}`
+  ).join('\n');
+  const cl = CHECKLIST.filter(c=>state.checklist[c]).map(c=>`- [x] ${c}`).join('\n');
+  return `# 清远漂流攻略（${fmtDate(state.date)}）
+- 景区：${b.s.name}
+- 预计总花费：约 ¥${Math.round(b.total)}（共 ${b.N} 人，人均 ¥${Math.round(b.total/b.N)}）
+
+## 详细地址
+${b.s.addr}
+
+## 每人预算
+${memberMd}
+
+## 总预算表
+- 门票 ¥${b.ticketTotal}
+- 交通 ¥${b.transportTotal}
+- 装备 ¥${b.gearTotal}
+- 餐饮 ¥${b.mealTotal}
+- 储物柜 ¥${b.locker}${b.parking?'，停车 ¥'+b.parking:''}
+${b.customFees.map(f=>`- ${f.name} ¥${f.amount}`).join('\n')}
+
+## 出发前检查
+${cl||'- 无'}
+
+## 我的笔记
+${state.notes||''}
+`;
+}
+function downloadMD(){
+  const blob = new Blob([buildMarkdown()], {type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='清远漂流攻略.md'; a.click(); URL.revokeObjectURL(a.href); toast('已导出 .md 文件 ⬇️');
+}
+
+/* ================= 汇总渲染 ================= */
+function renderAll(){ renderDate(); renderMembers(); renderSpots(); renderTickets(); renderBuy(); renderTransport(); renderStations(); renderItems(); renderCustom(); renderFeeCustom(); renderChecklist(); renderBudget(); }
+
+/* ================= 事件绑定 ================= */
+$('#date').addEventListener('change', e=>{ state.date=e.target.value; save(); renderDate(); renderTickets(); renderBudget(); });
+$('#btnAddMember').addEventListener('click', addMember);
+$('#trTabs').addEventListener('click', e=>{
+  const btn=e.target.closest('button[data-tr]'); if(!btn) return;
+  document.querySelectorAll('#trTabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tr-pane').forEach(p=>p.classList.remove('active'));
+  $('#tp-'+btn.dataset.tr).classList.add('active');
+});
+
+// 装备批量（按成员）
+$('#btnAllMust').addEventListener('click', ()=>{ state.members.forEach(m=>{ if(!m.items) m.items={}; ITEMS.forEach(it=>{ if(it.cat==='必带') m.items[it.id]=true; }); }); save(); renderMembers(); renderBudget(); toast('已给所有成员勾选「必带」'); });
+$('#btnClearAllGear').addEventListener('click', ()=>{ state.members.forEach(m=>{ m.items={}; }); save(); renderMembers(); renderBudget(); toast('已清空所有成员装备'); });
+
+// 自定义装备
+$('#btnAddCustom').addEventListener('click', addCustom);
+$('#customName').addEventListener('keydown', e=>{ if(e.key==='Enter') addCustom(); });
+$('#customPrice').addEventListener('keydown', e=>{ if(e.key==='Enter') addCustom(); });
+
+// 费用自定义
+$('#fxLocker').addEventListener('change', e=>{ state.customFixed.locker=Math.max(0,parseInt(e.target.value)||0); save(); renderBudget(); });
+$('#fxMeal').addEventListener('change', e=>{ state.customFixed.meal=Math.max(0,parseInt(e.target.value)||0); save(); renderBudget(); });
+$('#fxParking').addEventListener('change', e=>{ state.customFixed.parking=Math.max(0,parseInt(e.target.value)||0); save(); renderBudget(); });
+$('#btnAddFee').addEventListener('click', addFee);
+$('#feeName').addEventListener('keydown', e=>{ if(e.key==='Enter') addFee(); });
+$('#feeAmount').addEventListener('keydown', e=>{ if(e.key==='Enter') addFee(); });
+
+// 便签
+$('#noteMain').addEventListener('input', e=>syncNotes(e.target));
+$('#noteFloating').addEventListener('input', e=>syncNotes(e.target));
+$('#btnInsertDate').addEventListener('click', ()=>{ state.notes += (state.notes?'\n':'') + `【${fmtDate(state.date)}】\n`; save(); $('#noteMain').value=state.notes; $('#noteFloating').value=state.notes; noteCount(); });
+$('#btnInsertSpot').addEventListener('click', ()=>{ const b=calcBudget(); state.notes += (state.notes?'\n':'') + `【${b.s.name}】共 ${b.N} 人，人均约 ¥${Math.round(b.total/b.N)}\n`; save(); $('#noteMain').value=state.notes; $('#noteFloating').value=state.notes; noteCount(); });
+$('#btnCopyNotes').addEventListener('click', ()=>copyText(state.notes||'（暂无内容）'));
+$('#btnDownload').addEventListener('click', downloadMD);
+$('#btnClearNotes').addEventListener('click', ()=>{ if(confirm('确定清空笔记吗？')){ state.notes=''; save(); $('#noteMain').value=''; $('#noteFloating').value=''; noteCount(); toast('已清空'); } });
+
+// 悬浮便签工具
+$('#fInsertDate').addEventListener('click', ()=>{ $('#btnInsertDate').click(); });
+$('#fInsertSpot').addEventListener('click', ()=>{ $('#btnInsertSpot').click(); });
+$('#fCopy').addEventListener('click', ()=>copyText(state.notes||'（暂无内容）'));
+$('#fGoFull').addEventListener('click', ()=>{ closeNote(); document.querySelector('#tabs button[data-tab="notes"]').click(); });
+
+// 预算复制
+$('#btnCopyBudget').addEventListener('click', ()=>copyText(buildMarkdown().split('## 我的笔记')[0]));
+
+// 快捷
+$('#btnWeather').addEventListener('click', ()=>window.open('https://www.weather.com.cn/weather/101281301.shtml','_blank'));
+$('#btn12306home').addEventListener('click', ()=>window.open('https://www.12306.cn/index/','_blank'));
+$('#btnTaxiWeb').addEventListener('click', ()=>window.open('https://dache.amap.com/','_blank'));
+
+/* ================= 启动 ================= */
+renderAll();
+$('#noteMain').value = state.notes;
+$('#noteFloating').value = state.notes;
+noteCount();
+</script>
+</body>
+</html>
